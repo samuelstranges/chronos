@@ -1,0 +1,22 @@
+# Debug files
+debug.log
+
+# Build artifacts
+chronos
+*.exe
+*.bin
+
+# Script output files
+output.txt
+
+# OS files
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+.claude/
+
+# Test files
+*.test
+coverage.out

@@ -121,73 +121,25 @@ To sync with a CalDAV server, create `~/.config/chronos/config.json`:
 {
     "storage_type": "caldav",
     "caldav": {
-        "server_url": "https://caldav.example.com/dav.php",
-        "username": "your-username",
-        "password_command": "pass show chronos/caldav"
+        "server_url": "http://localhost:8086",
+        "username": "sam",
+        "password_command": "echo 'my_password'",
+        "calendar_home_url": "/dav.php/calendars/sam/",
+        "sync_interval": 60
     }
 }
 ```
 
 ##### Password Options (choose one)
 
-For security, use **password_command** (recommended) to fetch password from your
-password manager:
+For security, use `password_command` (recommended) to fetch password from your
+password manager, or use an environment variable, or plain text (not
+recommended). Only one is needed to work:
 
 ```json
-"password_command": "pass show chronos/caldav"                          // pass (password-store)
-"password_command": "op read op://Personal/Chronos/password"            // 1Password CLI
-"password_command": "bw get password chronos-caldav"                    // Bitwarden CLI
-"password_command": "security find-generic-password -a chronos -w"      // macOS Keychain
-```
-
-Alternatively, use environment variable:
-
-```json
+"password_command": "pass show chronos/caldav"
 "password_env": "CHRONOS_CALDAV_PASSWORD"
-```
-
-Then export: `export CHRONOS_CALDAV_PASSWORD="your-password"`
-
-Or plain text (not recommended):
-
-```json
 "password": "your-password"
-```
-
-#### Example Configurations
-
-**Local file storage** (default):
-
-```json
-{
-    "storage_type": "file"
-}
-```
-
-**Nextcloud CalDAV**:
-
-```json
-{
-    "storage_type": "caldav",
-    "caldav": {
-        "server_url": "https://nextcloud.example.com/remote.php/dav",
-        "username": "your-username",
-        "password_command": "pass show nextcloud"
-    }
-}
-```
-
-**Baikal CalDAV**:
-
-```json
-{
-    "storage_type": "caldav",
-    "caldav": {
-        "server_url": "https://baikal.example.com/dav.php",
-        "username": "your-username",
-        "password_command": "op read op://Personal/Baikal/password"
-    }
-}
 ```
 
 ## Requirements

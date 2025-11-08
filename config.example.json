@@ -1,25 +1,10 @@
 {
-  "storage_type": "file",
-  "caldav": {
-    "server_url": "https://baikal.example.com/dav.php",
-    "username": "your-username",
-    "password_command": "pass show chronos/caldav",
-    "password_env": "",
-    "password": ""
-  }
+    "storage_type": "caldav",
+    "caldav": {
+        "server_url": "http://localhost:8086",
+        "username": "sam",
+        "password_command": "echo 'my_password'",
+        "calendar_home_url": "/dav.php/calendars/sam/",
+        "sync_interval": 60
+    }
 }
-
-CREDENTIAL OPTIONS (choose one):
-
-1. password_command - Execute shell command (RECOMMENDED)
-   "password_command": "pass show chronos/caldav"
-   "password_command": "op read op://Personal/Chronos/password"
-   "password_command": "bw get password chronos-caldav"
-   "password_command": "security find-generic-password -a chronos -s caldav -w"
-
-2. password_env - Read from environment variable
-   "password_env": "CHRONOS_CALDAV_PASSWORD"
-   Then: export CHRONOS_CALDAV_PASSWORD="your-password"
-
-3. password - Plain text (NOT RECOMMENDED - insecure!)
-   "password": "your-password"

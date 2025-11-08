@@ -27,6 +27,12 @@ Build from source:
 git clone https://github.com/samuelstranges/chronos
 cd chronos
 go build .
+
+# If using files for calendar create new calendar
+# Will be seen as 'Unnamed Calendar' in Chronos
+mkdir -p ~/.config/chronos/calendars/default
+
+# Run application
 ./chronos
 ```
 

@@ -4,7 +4,8 @@ https://github.com/user-attachments/assets/4666005c-84b1-4904-a6e1-d493dd92c448
 
 A terminal calendar application with vim-style keybindings.
 
-Still highly experimental! Use at your own risk...
+Still highly experimental! Use at your own risk... I highly recommend using the
+file config option rather than caldav until I get some more testing done!
 
 ## Features
 

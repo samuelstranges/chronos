@@ -61,23 +61,14 @@ func Default() *Config {
 }
 
 // GetConfigPath returns the path to the config file
-// Checks both ~/.config/chronos (priority) and system config dir
+// Always uses ~/.config/chronos/config.json for consistency across platforms
 func GetConfigPath() string {
-	// Priority 1: ~/.config/chronos/config.json (XDG standard on Linux/Unix)
 	homeDir, err := os.UserHomeDir()
-	if err == nil {
-		xdgPath := filepath.Join(homeDir, ".config", "chronos", "config.json")
-		if _, err := os.Stat(xdgPath); err == nil {
-			return xdgPath
-		}
-	}
-
-	// Priority 2: System config dir (~/Library/Application Support on macOS)
-	configDir, err := os.UserConfigDir()
 	if err != nil {
-		configDir = filepath.Join(os.Getenv("HOME"), ".config")
+		// Fallback to HOME environment variable
+		homeDir = os.Getenv("HOME")
 	}
-	return filepath.Join(configDir, "chronos", "config.json")
+	return filepath.Join(homeDir, ".config", "chronos", "config.json")
 }
 
 // Load loads configuration from disk

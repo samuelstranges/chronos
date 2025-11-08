@@ -68,12 +68,13 @@ func (c *CalDAVConfig) Validate() error {
 }
 
 // GetConfigPath returns the path to the CalDAV config file
+// Always uses ~/.config/chronos/caldav_config.json for consistency across platforms
 func GetConfigPath() string {
-	configDir, err := os.UserConfigDir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		configDir = filepath.Join(os.Getenv("HOME"), ".config")
+		homeDir = os.Getenv("HOME")
 	}
-	return filepath.Join(configDir, "chronos", "caldav_config.json")
+	return filepath.Join(homeDir, ".config", "chronos", "caldav_config.json")
 }
 
 // LoadCalDAVConfig loads CalDAV configuration from disk

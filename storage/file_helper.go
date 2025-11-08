@@ -38,14 +38,19 @@ func readCalendarFromFile(filePath string) (*ical.Calendar, error) {
 }
 
 // getBaseDir returns the base directory for calendar storage
+// Always uses ~/.config/chronos/calendars for consistency across platforms
 func getBaseDir() string {
-	configDir, err := os.UserConfigDir()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		// Fallback to home directory
-		homeDir, _ := os.UserHomeDir()
-		configDir = filepath.Join(homeDir, ".config")
+		// Last resort fallback
+		return filepath.Join("/tmp", "chronos", "calendars")
 	}
-	return filepath.Join(configDir, "chronos", "calendars")
+	return filepath.Join(homeDir, ".config", "chronos", "calendars")
+}
+
+// getCalendarPath returns the full path for a calendar .ics file
+func getCalendarPath(calendarID string) string {
+	return filepath.Join(getBaseDir(), fmt.Sprintf("%s.ics", calendarID))
 }
 
 // getCalendarDir returns the directory path for a calendar

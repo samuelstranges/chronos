@@ -58,7 +58,30 @@ func (fs *FileStorage) ImportFromFile(filePath string) (*ical.Calendar, error) {
 	return readCalendarFromFile(filePath)
 }
 
-// LoadCalendars loads all calendars from persistent storage (per-event file structure)
+// SaveCalendars saves all calendars to disk as individual .ics files
+func (fs *FileStorage) SaveCalendars(calendarMap map[string]*ical.Calendar) error {
+	// Ensure base directory exists
+	if err := ensureBaseDir(); err != nil {
+		return fmt.Errorf("failed to create base directory: %w", err)
+	}
+
+	// Export each calendar
+	for calendarID, calendar := range calendarMap {
+		// Ensure calendar is valid before writing
+		if err := ensureCalendarValid(calendar); err != nil {
+			return err
+		}
+
+		filePath := getCalendarPath(calendarID)
+		if err := writeCalendarToFile(calendar, filePath); err != nil {
+			return fmt.Errorf("failed to save calendar %s: %w", calendarID, err)
+		}
+	}
+
+	return nil
+}
+
+// LoadCalendars loads all calendars from persistent storage
 func (fs *FileStorage) LoadCalendars() (map[string]*ical.Calendar, error) {
 	baseDir := getBaseDir()
 
@@ -67,59 +90,34 @@ func (fs *FileStorage) LoadCalendars() (map[string]*ical.Calendar, error) {
 		return nil, fmt.Errorf("failed to create base directory: %w", err)
 	}
 
-	// Read all calendar directories
-	entries, err := os.ReadDir(baseDir)
+	// Read all .ics files in the directory (standard format)
+	files, err := filepath.Glob(filepath.Join(baseDir, "*.ics"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to list calendar directories: %w", err)
+		return nil, fmt.Errorf("failed to list .ics files: %w", err)
 	}
 
 	calendars := make(map[string]*ical.Calendar)
-	var skippedEvents []string
+	var skippedFiles []string
 
-	for _, entry := range entries {
-		// Skip non-directories (ignore any stray files)
-		if !entry.IsDir() {
-			continue
-		}
+	for _, filePath := range files {
+		// Extract calendar ID from filename (STABLE ID based on filename, not array index!)
+		filename := filepath.Base(filePath)
+		calendarID := filename[:len(filename)-4] // Remove .ics extension
 
-		calendarID := entry.Name()
-
-		// Create merged calendar for this calendar ID
-		mergedCalendar := ical.NewCalendar()
-		mergedCalendar.Props.SetText(ical.PropVersion, "2.0")
-		mergedCalendar.Props.SetText(ical.PropProductID, "-//Chronos//Chronos Calendar//EN")
-
-		// Load all event files from this calendar's directory
-		calendarDir := getCalendarDir(calendarID)
-		eventFiles, err := filepath.Glob(filepath.Join(calendarDir, "*.ics"))
+		// Load the calendar using helper
+		calendar, err := readCalendarFromFile(filePath)
 		if err != nil {
-			continue // Skip this calendar if we can't list files
+			skippedFiles = append(skippedFiles, filePath)
+			continue // Skip files that can't be loaded
 		}
 
-		// Read each event file and merge into calendar
-		for _, eventFilePath := range eventFiles {
-			// Read single-event calendar
-			singleEventCal, err := readCalendarFromFile(eventFilePath)
-			if err != nil {
-				skippedEvents = append(skippedEvents, eventFilePath)
-				continue
-			}
-
-			// Extract VEVENT components and add to merged calendar
-			for _, child := range singleEventCal.Children {
-				if child.Name == "VEVENT" {
-					mergedCalendar.Children = append(mergedCalendar.Children, child)
-				}
-			}
-		}
-
-		calendars[calendarID] = mergedCalendar
+		calendars[calendarID] = calendar
 	}
 
-	// Report if events were skipped but don't fail the entire operation
-	if len(skippedEvents) > 0 {
-		return calendars, fmt.Errorf("loaded %d calendars, skipped %d event files with errors: %v",
-			len(calendars), len(skippedEvents), skippedEvents)
+	// Report if files were skipped but don't fail the entire operation
+	if len(skippedFiles) > 0 {
+		return calendars, fmt.Errorf("loaded %d calendars, skipped %d files with errors: %v",
+			len(calendars), len(skippedFiles), skippedFiles)
 	}
 
 	return calendars, nil

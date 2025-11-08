@@ -27,13 +27,13 @@ func ShowIfError(weekModel *types.WeekModel, seconds int, err error, errorMessag
 
 // logErrorToFile appends error to chronos error log
 func logErrorToFile(message string) {
-	// Get user's config directory
-	configDir, err := os.UserConfigDir()
+	// Get user's home directory
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return // Silently fail if can't get config dir
+		return // Silently fail if can't get home dir
 	}
 
-	logPath := filepath.Join(configDir, "chronos", "error.log")
+	logPath := filepath.Join(homeDir, ".config", "chronos", "error.log")
 
 	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(logPath), 0755); err != nil {

@@ -48,6 +48,11 @@ func (cs *CalDAVStorage) LoadCalendars() (map[string]*ical.Calendar, error) {
 	return calendars, nil
 }
 
+// SaveCalendars not supported for CalDAV
+func (cs *CalDAVStorage) SaveCalendars(calendarMap map[string]*ical.Calendar) error {
+	return fmt.Errorf("SaveCalendars not supported for CalDAV")
+}
+
 // SaveEvent saves a single event to the CalDAV server
 func (cs *CalDAVStorage) SaveEvent(calendarID string, event *ical.Event) (string, error) {
 	etag, err := cs.client.SaveEvent(calendarID, event)

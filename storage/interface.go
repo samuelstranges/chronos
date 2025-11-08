@@ -11,6 +11,9 @@ type CalendarStorage interface {
 	// LoadCalendars loads all calendars from persistent storage
 	LoadCalendars() (map[string]*ical.Calendar, error)
 
+	// SaveCalendars saves all calendars to persistent storage
+	SaveCalendars(calendars map[string]*ical.Calendar) error
+
 	// === EXPORT/IMPORT ===
 
 	// ExportCalendar exports a specific calendar to a file path

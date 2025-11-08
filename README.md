@@ -28,9 +28,11 @@ git clone https://github.com/samuelstranges/chronos
 cd chronos
 go build .
 
-# If using files for calendar create new calendar
-# Will be seen as 'Unnamed Calendar' in Chronos
-mkdir -p ~/.config/chronos/calendars/default
+# Create calendar folder
+mkdir -p ~/.config/chronos/calendars/
+
+# Copy your calendar
+cp /path/to/your/calendar.ics ~/.config/chronos/calendars/
 
 # Run application
 ./chronos

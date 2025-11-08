@@ -151,47 +151,7 @@ func (em *EventManager) recordChange(changeType util.ChangeType, eventsChanged E
 	// Check if we're using CalDAV (async) or file storage (sync)
 	isCalDAV := em.storage.GetStorageType() == "caldav"
 
-	// Save to storage using individual event operations
-	for _, singleChange := range eventsChanged.Changes {
-		if singleChange.EventData == nil {
-			continue
-		}
-
-		eventUID := singleChange.EventData.Props.Get("UID")
-		if eventUID == nil {
-			continue
-		}
-
-		// Find which calendar this event belongs to
-		calendarID := em.findCalendarID(singleChange.Calendar)
-		if calendarID == "" {
-			continue
-		}
-
-		// For file storage, do synchronous operations
-		// For CalDAV, operations will be handled asynchronously
-		if !isCalDAV {
-			// Call appropriate storage method based on change type
-			switch changeType {
-			case util.ChangeTypeDelete:
-				if err := em.storage.DeleteEvent(calendarID, eventUID.Value); err != nil {
-					// For sync operations, show error immediately
-					return func() tea.Msg {
-						return types.VimErrorMsg{Error: fmt.Sprintf("Failed to save: %v", err)}
-					}
-				}
-			case util.ChangeTypeAdd, util.ChangeTypeEdit:
-				if _, err := em.storage.SaveEvent(calendarID, singleChange.EventData); err != nil {
-					// For sync operations, show error immediately
-					return func() tea.Msg {
-						return types.VimErrorMsg{Error: fmt.Sprintf("Failed to save: %v", err)}
-					}
-				}
-			}
-		}
-	}
-
-	// Return command that handles both async sync (CalDAV) and refresh
+	// For CalDAV, use async sync
 	if isCalDAV {
 		return tea.Batch(
 			em.SyncToServerAsync(changeType, eventsChanged),
@@ -201,7 +161,14 @@ func (em *EventManager) recordChange(changeType util.ChangeType, eventsChanged E
 		)
 	}
 
-	// For file storage, just refresh
+	// For file storage, save all calendars synchronously
+	if err := em.storage.SaveCalendars(em.calendarMap); err != nil {
+		return func() tea.Msg {
+			return types.VimErrorMsg{Error: fmt.Sprintf("Failed to save: %v", err)}
+		}
+	}
+
+	// Return refresh command
 	return func() tea.Msg {
 		return types.RefreshMsg{}
 	}
@@ -296,61 +263,26 @@ func getStorageOperation(changeType util.ChangeType, singleChange SingleEventCha
 	return nil, false
 }
 
-// syncUndoRedoToStorage syncs undo/redo changes to storage using granular operations
-// This follows the same pattern as recordChange but for undo/redo operations
+// syncUndoRedoToStorage syncs undo/redo changes to storage
 func (em *EventManager) syncUndoRedoToStorage(batchChange *util.BatchChange[EventsChanged], isUndo bool) tea.Cmd {
 	// Check if we're using CalDAV (async) or file storage (sync)
 	isCalDAV := em.storage.GetStorageType() == "caldav"
 
-	var cmds []tea.Cmd
-
-	// Process all changes in the batch
-	for _, change := range batchChange.Changes {
-		eventsChanged := change.Data
-
-		// For file storage, do synchronous operations
-		if !isCalDAV {
-			for _, singleChange := range eventsChanged.Changes {
-				eventToUse, shouldDelete := getStorageOperation(change.Type, singleChange, isUndo)
-				if eventToUse == nil {
-					continue
-				}
-
-				eventUID := eventToUse.Props.Get("UID")
-				if eventUID == nil {
-					continue
-				}
-
-				calendarID := em.findCalendarID(singleChange.Calendar)
-				if calendarID == "" {
-					continue
-				}
-
-				// Perform inverse operation
-				var err error
-				if shouldDelete {
-					err = em.storage.DeleteEvent(calendarID, eventUID.Value)
-				} else {
-					_, err = em.storage.SaveEvent(calendarID, eventToUse)
-				}
-
-				if err != nil {
-					return func() tea.Msg {
-						return types.VimErrorMsg{Error: fmt.Sprintf("Failed to save undo/redo: %v", err)}
-					}
-				}
-			}
-		} else {
-			// For CalDAV, queue async sync commands (but don't use undo on failure since we're already in undo/redo)
-			cmds = append(cmds, em.syncUndoRedoToServerAsync(change.Type, eventsChanged, isUndo))
+	if isCalDAV {
+		// For CalDAV, queue async sync commands
+		var cmds []tea.Cmd
+		for _, change := range batchChange.Changes {
+			cmds = append(cmds, em.syncUndoRedoToServerAsync(change.Type, change.Data, isUndo))
 		}
+		cmds = append(cmds, func() tea.Msg { return types.RefreshMsg{} })
+		return tea.Batch(cmds...)
 	}
 
-	// Add refresh command
-	cmds = append(cmds, func() tea.Msg { return types.RefreshMsg{} })
-
-	if len(cmds) > 0 {
-		return tea.Batch(cmds...)
+	// For file storage, save all calendars synchronously
+	if err := em.storage.SaveCalendars(em.calendarMap); err != nil {
+		return func() tea.Msg {
+			return types.VimErrorMsg{Error: fmt.Sprintf("Failed to save undo/redo: %v", err)}
+		}
 	}
 
 	return func() tea.Msg { return types.RefreshMsg{} }

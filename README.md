@@ -1,6 +1,6 @@
 # chronos
 
-https://github.com/user-attachments/assets/4666005c-84b1-4904-a6e1-d493dd92c448
+https://github.com/user-attachments/assets/1cfeaea3-5a87-4c07-b127-910b0da2808e
 
 A terminal calendar application with vim-style keybindings.
 

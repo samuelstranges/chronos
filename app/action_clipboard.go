@@ -13,7 +13,7 @@ import (
 func HandleCutEvent(m Model, count int) (tea.Model, tea.Cmd) {
 	weekModel := &m.WeekModel
 	eventManager := m.EventManager
-	if event := week_view_grid.GetEventUnderCursor(weekModel); event != nil {
+	if event := week_view_grid.GetEventUnderCursor(weekModel); event != nil && event.Instance != nil {
 		// Copy first
 		err := eventManager.CopyEvent(event.Instance.OriginalEvent)
 		if err == nil {

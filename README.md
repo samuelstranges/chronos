@@ -85,6 +85,15 @@ cp /path/to/your/calendar.ics ~/.config/chronos/calendars/
 - `cL` - change link
 - `cC` - change color
 
+#### Form input (when editing fields)
+
+- `ctrl+u` - clear field
+- `ctrl+a` / `home` - move to start
+- `ctrl+e` / `end` - move to end
+- `ctrl+w` - delete word backward
+- `ctrl+k` - delete after cursor
+- `esc` - cancel
+
 #### View modes
 
 - `v` - enter visual mode

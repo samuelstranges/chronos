@@ -401,8 +401,13 @@ func setEventCustomProperties(event *ical.Event, properties map[string]string) {
 						},
 					})
 				} else {
-					// Regular datetime - use SetText to preserve exact format without TZID params
-					event.Props.SetText(propName, propValue)
+					// Regular datetime - set directly so we don't get VALUE=TEXT
+					// (SetText escapes semicolons and emits VALUE=TEXT, which
+					// breaks DTSTART/DTEND/DTSTAMP/LAST-MODIFIED parsing).
+					event.Props.Set(&ical.Prop{
+						Name:  propName,
+						Value: propValue,
+					})
 				}
 			} else {
 				// If we can't parse as datetime, fall back to text (for backward compatibility)

@@ -126,6 +126,14 @@ func SetEventDateTimeProperty(event *ical.Event, propName string, localTime Loca
 		return
 	}
 
-	// Use SetDateTime which properly handles datetime values without VALUE=TEXT
-	event.Props.SetDateTime(propName, localTime.Time)
+	// Emit floating local time (no TZID, no Z suffix).
+	// Chronos treats all datetimes as local-clock times, so RFC 5545 floating
+	// time is the correct semantic. Using go-ical's SetDateTime would write
+	// TZID=Local (from time.Local.String()), which no calendar app understands
+	// and for which we have no VTIMEZONE definition — importers then either
+	// fall back to UTC or reject the field.
+	event.Props.Set(&ical.Prop{
+		Name:  propName,
+		Value: localTime.Time.Format("20060102T150405"),
+	})
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/types"
+	"github.com/samuelstranges/chronos/util"
 	"github.com/teambition/rrule-go"
 )
 
@@ -229,20 +230,17 @@ func generateRuleString(options rrule.ROption) (string, error) {
 	// Get the full string and extract just the RRULE line
 	fullStr := rule.String()
 
-	// Find and extract just the RRULE line
-	// The rrule library returns iCal format like:
-	// DTSTART;TZID=Local:20250812T000000
-	// RRULE:FREQ=DAILY
-	lines := strings.Split(fullStr, "\n")
-	for _, line := range lines {
+	// Find and extract just the RRULE line. rrule-go returns iCal format like:
+	//   DTSTART;TZID=Local:20250812T000000
+	//   RRULE:FREQ=DAILY;UNTIL=20250901T000000Z
+	// rrule-go hardcodes UNTIL as UTC; we rewrite it to floating local so the
+	// value type matches our floating DTSTARTs (RFC 5545 §3.3.10).
+	for _, line := range strings.Split(fullStr, "\n") {
 		line = strings.TrimSpace(line)
-		// Look for lines that are exactly RRULE properties (not SUMMARY:RRULE: etc)
 		if line == "RRULE:" || (strings.HasPrefix(line, "RRULE:") && len(line) > 6) {
-			extracted := line[6:] // Remove "RRULE:" prefix
-			return extracted, nil
+			return util.RewriteRRuleUntilToFloating(line[6:]), nil
 		}
 	}
 
-	// Fallback: no RRULE line found
 	return "", fmt.Errorf("no RRULE found in generated string")
 }

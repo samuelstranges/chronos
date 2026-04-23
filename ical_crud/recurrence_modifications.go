@@ -77,10 +77,13 @@ func (r *RRuleOperations) updateComponentExdates(component *ical.Component, exda
 		return ""
 	}
 
-	// Format all exception dates as comma-separated UTC times
+	// Format EXDATEs as floating local wall-clock to match Chronos's floating
+	// DTSTART/DTEND output. Per RFC 5545 §3.8.5.1 the EXDATE value type must
+	// match DTSTART's — mixing UTC EXDATEs with floating DTSTARTs makes the
+	// exclusions silently not apply (deleted instances reappear).
 	var exdateStrs []string
 	for _, exdate := range exdates {
-		formatted := exdate.UTC().Format("20060102T150405Z")
+		formatted := timezone.NewLocalTime(exdate).Format("20060102T150405")
 		exdateStrs = append(exdateStrs, formatted)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emersion/go-ical"
+	"github.com/samuelstranges/chronos/util"
 )
 
 // CalDAVStorage implements CalendarStorage using a remote CalDAV server
@@ -35,14 +36,20 @@ func (cs *CalDAVStorage) LoadCalendars() (map[string]*ical.Calendar, error) {
 	calendarIDs := cs.client.GetCalendarIDs()
 
 	// Fetch each calendar
+	var failedIDs []string
 	for _, calendarID := range calendarIDs {
 		calendar, err := cs.client.FetchCalendar(calendarID)
 		if err != nil {
-			// Skip calendars that fail to load, but log the error
+			util.LogErrorToFile(fmt.Sprintf("caldav: failed to load calendar %q: %v", calendarID, err))
+			failedIDs = append(failedIDs, calendarID)
 			continue
 		}
 
 		calendars[calendarID] = calendar
+	}
+
+	if len(failedIDs) > 0 {
+		return calendars, fmt.Errorf("failed to load %d of %d calendars: %v (see ~/.config/chronos/error.log)", len(failedIDs), len(calendarIDs), failedIDs)
 	}
 
 	return calendars, nil

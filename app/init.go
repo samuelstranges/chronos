@@ -102,14 +102,15 @@ func NewModel(bgHex string) Model {
 	calendarMap, loadErr := calStorage.LoadCalendars()
 	var eventMgr *ical_crud.EventManager
 
-	if loadErr == nil && len(calendarMap) > 0 {
-		// Successfully loaded calendars - use them directly with stable IDs!
+	if len(calendarMap) > 0 {
+		// Loaded at least one calendar (possibly a partial load) - use what we have
 		eventMgr = ical_crud.New(calendarMap, calStorage)
 	} else {
 		// No calendars found - start with empty calendar map
 		emptyCalendarMap := make(map[string]*ical.Calendar)
 		eventMgr = ical_crud.New(emptyCalendarMap, calStorage)
 	}
+	util.ShowIfError(&weekModel, 8, loadErr, "Failed to load calendars")
 
 	// Initialize cache with default values (will be updated on first WindowSizeMsg)
 	weekModel.CachedCellWidth, weekModel.CachedContentWidth = week_view_shared.CalculateCellWidth(80)

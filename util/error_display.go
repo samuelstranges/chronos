@@ -21,12 +21,13 @@ func ShowIfError(weekModel *types.WeekModel, seconds int, err error, errorMessag
 		weekModel.ErrorExpiry = time.Now().Add(time.Duration(seconds) * time.Second)
 
 		// Log to file for debugging
-		logErrorToFile(fullMessage)
+		LogErrorToFile(fullMessage)
 	}
 }
 
-// logErrorToFile appends error to chronos error log
-func logErrorToFile(message string) {
+// LogErrorToFile appends a timestamped error message to the chronos error log
+// (~/.config/chronos/error.log), regardless of whether a WeekModel is available.
+func LogErrorToFile(message string) {
 	// Get user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
